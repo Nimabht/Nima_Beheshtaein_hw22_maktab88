@@ -8,6 +8,8 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Req,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -16,6 +18,7 @@ import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from './../mail/mail.service';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -65,5 +68,23 @@ export class AuthController {
     if (!isVerified) throw new BadRequestException('Invalid token.');
     await this.userService.verifyUser(emailVerification.email);
     return 'Email verified successfully.';
+  }
+
+  @Get('/googleLogin')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {}
+
+  @Get('redirect')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req) {
+    const { email, firstname, lastname } = req.user;
+    if (!!(await this.userService.findByEmail(email))) {
+      throw new BadRequestException('Try another email.');
+    }
+    if (!(await this.userService.googleFindByEmail(email))) {
+      await this.userService.googleCreate(email, firstname, lastname);
+      return 'Logged in successfully.';
+    }
+    return 'Logged in successfully.';
   }
 }

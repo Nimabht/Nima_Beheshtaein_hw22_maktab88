@@ -4,11 +4,14 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { DeleteResult, Repository } from 'typeorm';
+import { GoogleUser } from './entities/googleUser.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
+    @InjectRepository(GoogleUser)
+    private googleUserRepository: Repository<GoogleUser>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -22,6 +25,18 @@ export class UserService {
     return createdUser;
   }
 
+  async googleCreate(
+    email: string,
+    firstname: string,
+    lastname: string,
+  ): Promise<GoogleUser> {
+    const user = new GoogleUser();
+    user.username = `google_${firstname}_${lastname}`;
+    user.email = email;
+    const createdUser = await this.googleUserRepository.save(user);
+    return createdUser;
+  }
+
   findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
@@ -32,6 +47,10 @@ export class UserService {
 
   findByEmail(email: string): Promise<User> {
     return this.userRepository.findOneBy({ email });
+  }
+
+  googleFindByEmail(email: string): Promise<GoogleUser> {
+    return this.googleUserRepository.findOneBy({ email });
   }
 
   findByUsername(username: string): Promise<User> {

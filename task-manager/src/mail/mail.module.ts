@@ -13,7 +13,7 @@ import { join } from 'path';
         secure: false,
         auth: {
           user: 'apikey',
-          pass: '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',
+          pass: process.env.SEND_GRID_KEY,
         },
       },
       defaults: {
