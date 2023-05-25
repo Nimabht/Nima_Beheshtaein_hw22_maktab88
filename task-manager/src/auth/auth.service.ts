@@ -5,10 +5,14 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as SendGrid from '@sendgrid/mail';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
+import { User } from 'src/user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
+import { GoogleUser } from 'src/user/entities/googleUser.entity';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private jwtService: JwtService,
     @InjectRepository(EmailVerification)
     private emailVerificationRepository: Repository<EmailVerification>,
     private readonly configService: ConfigService,
@@ -46,5 +50,18 @@ export class AuthService {
     if (emailVerification.email !== decoded.email) return false;
     await this.emailVerificationRepository.delete(emailVerification.id);
     return true;
+  }
+
+  async signIn(user: User | GoogleUser): Promise<any> {
+    let payload: object;
+    if (user instanceof GoogleUser) {
+      payload = { id: user.id, loginMethod: 'google' };
+    } else {
+      // The user is a regular User
+      payload = { id: user.id, loginMethod: 'manual' };
+    }
+
+    const token = await this.jwtService.signAsync(payload);
+    return token;
   }
 }

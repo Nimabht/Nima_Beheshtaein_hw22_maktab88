@@ -5,10 +5,9 @@ import { UserModule } from 'src/user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { EmailVerification } from './entities/user.entity';
-import { SendgridService } from 'src/sendgrid/sendgrid.service';
-import { SendgridModule } from 'src/sendgrid/sendgrid.module';
 import { MailModule } from 'src/mail/mail.module';
 import { GoogleStrategy } from './google.strategy';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   controllers: [AuthController],
@@ -17,8 +16,12 @@ import { GoogleStrategy } from './google.strategy';
     ConfigModule.forRoot({
       envFilePath: 'dev.env',
     }),
+    JwtModule.register({
+      global: true,
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '1h' },
+    }),
     UserModule,
-    SendgridModule,
     MailModule,
     TypeOrmModule.forFeature([EmailVerification]),
   ],

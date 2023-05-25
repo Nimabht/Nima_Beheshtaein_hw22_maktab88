@@ -4,14 +4,19 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   NotFoundException,
   Param,
   ParseIntPipe,
   Post,
   Req,
+  Res,
+  UnauthorizedException,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { UserService } from 'src/user/user.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
@@ -19,6 +24,7 @@ import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from './../mail/mail.service';
 import { AuthGuard } from '@nestjs/passport';
+import { SigninUserDto } from './dto/signin-auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -55,6 +61,31 @@ export class AuthController {
     return 'Please confirm your email!';
   }
 
+  @HttpCode(HttpStatus.OK)
+  @Post('login')
+  async signIn(@Body() signInDto: SigninUserDto, @Res() res: Response) {
+    const user = await this.userService.findByEmail(signInDto.email);
+    if (!user) {
+      throw new UnauthorizedException('Email or password is incorrect!');
+    }
+
+    if (!(await user.validatePassword(signInDto.password))) {
+      throw new UnauthorizedException('Email or password is incorrect!');
+    }
+
+    if (!user.verified) {
+      throw new UnauthorizedException('Please verify your email!');
+    }
+
+    const token = await this.authService.signIn(user);
+
+    res.cookie('jwt', token, {
+      httpOnly: false,
+    });
+
+    return res.status(HttpStatus.OK).send({ message: 'Login successful' });
+  }
+
   @Get('/email/verify/:emailToken')
   async verifyEmail(@Param('emailToken') emailToken: string) {
     const emailVerification =
@@ -74,17 +105,24 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
+  @HttpCode(HttpStatus.OK)
   @Get('redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req) {
+  async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const { email, firstname, lastname } = req.user;
     if (!!(await this.userService.findByEmail(email))) {
       throw new BadRequestException('Try another email.');
     }
     if (!(await this.userService.googleFindByEmail(email))) {
       await this.userService.googleCreate(email, firstname, lastname);
-      return 'Logged in successfully.';
     }
-    return 'Logged in successfully.';
+    const user = await this.userService.googleFindByEmail(email);
+    const token = await this.authService.signIn(user);
+
+    res.cookie('jwt', token, {
+      httpOnly: false,
+    });
+
+    return res.status(HttpStatus.OK).send({ message: 'Login successful' });
   }
 }
