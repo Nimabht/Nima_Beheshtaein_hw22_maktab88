@@ -24,10 +24,10 @@ export class UserService {
     if (createUserDto instanceof CreateUserDto) {
       user.password = createUserDto.password;
       await user.hashPassword();
-      user.verified = true;
+      user.verified = false;
       // Set other properties specific to CreateUserDto if needed
     } else if (createUserDto instanceof CreateGoogleUserDto) {
-      user.verified = false;
+      user.verified = true;
       // Set other properties specific to CreateGoogleUserDto if needed
     } else {
       throw new Error('Invalid createUserDto type');
