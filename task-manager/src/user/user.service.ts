@@ -57,7 +57,11 @@ export class UserService {
   }
 
   update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    this.userRepository.update(id, updateUserDto);
+    if (!!updateUserDto.email) {
+      this.userRepository.update(id, { ...updateUserDto, verified: false });
+    } else {
+      this.userRepository.update(id, updateUserDto);
+    }
     return this.userRepository.findOneBy({ id });
   }
 

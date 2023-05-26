@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Welcome to the Dashboard</h2>
+      <h4>User Information:</h4>
+      <p><strong>ID:</strong> <%= user.id %></p>
+      <p><strong>Username:</strong> <%= user.username %></p>
+      <p><strong>Email:</strong> <%= user.email %></p>
+
+      <h4>Update User Information:</h4>
+      <form id="updateForm">
+        <div class="form-group">
+          <label for="newUsername">New Username:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="newUsername"
+            placeholder="Enter new username"
+          />
+        </div>
+        <div class="form-group">
+          <label for="newEmail">New Email:</label>
+          <input
+            type="email"
+            class="form-control"
+            id="newEmail"
+            placeholder="Enter new email"
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+      </form>
+      <button type="submit" id="logoutBtn" class="btn btn-danger mt-3">
+        Logout
+      </button>
+      <button type="submit" id="resetPasswordBtn" class="btn btn-primary mt-3">
+        Reset Password
+      </button>
+      <button type="button" id="deleteBtn" class="btn btn-warning mt-3">
+        Delete
+      </button>
+    </div>
+
+    <script>
+      document
+        .getElementById('deleteBtn')
+        .addEventListener('click', function () {
+          var confirmDelete = confirm(
+            'Are you sure you want to delete your account?',
+          );
+
+          if (confirmDelete) {
+            var userId = '<%= user.id %>';
+
+            var jwt = document.cookie
+              .split('; ')
+              .find((row) => row.startsWith('jwt='))
+              .split('=')[1];
+
+            fetch('/user/' + userId, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + jwt,
+              },
+            })
+              .then(function (response) {
+                if (response.ok) {
+                  document.cookie =
+                    'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                  window.location.href = '/login';
+                } else {
+                  response.json().then(function (data) {
+                    alert('Error: ' + data.message);
+                  });
+                }
+              })
+              .catch(function (error) {
+                console.log('Error:', error);
+              });
+          }
+        });
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.cookie =
+          'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        window.location.href = '/login';
+      });
+      document
+        .getElementById('resetPasswordBtn')
+        .addEventListener('click', () => {
+          window.location.href = '/reset-password';
+        });
+
+      document
+        .getElementById('updateForm')
+        .addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var newUsername = document.getElementById('newUsername').value;
+          var newEmail = document.getElementById('newEmail').value;
+
+          var formData = {};
+
+          if (newUsername) {
+            formData.username = newUsername;
+          }
+          if (newEmail) {
+            formData.email = newEmail;
+          }
+
+          var userId = '<%= user.id %>';
+
+          var jwt = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('jwt='))
+            .split('=')[1];
+          fetch('/user/' + userId, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + jwt,
+            },
+            body: JSON.stringify(formData),
+          })
+            .then(function (response) {
+              if (response.ok) {
+                document.cookie =
+                  'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                window.location.href = '/login';
+              } else {
+                response.json().then(function (data) {
+                  alert('Error: ' + data.message);
+                });
+              }
+            })
+            .catch(function (error) {
+              console.log('Error:', error);
+            });
+        });
+    </script>
+  </body>
+</html>

@@ -12,15 +12,22 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  forwardRef,
+  Inject,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { IsNull } from 'typeorm';
+import { AuthService } from 'src/auth/auth.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {}
 
   @UseGuards(AuthGuard)
   @Get(':id')
@@ -48,6 +55,13 @@ export class UserController {
         updateUserDto.email,
       );
       if (!!existingUser) throw new ConflictException('Try another email.');
+      const token = this.authService.generateVerificationToken(
+        updateUserDto.email,
+      );
+      await this.authService.createEmailVerification(
+        updateUserDto.email,
+        token,
+      );
     }
     if (!!updateUserDto.username) {
       const existingUser = await this.userService.findByUsername(

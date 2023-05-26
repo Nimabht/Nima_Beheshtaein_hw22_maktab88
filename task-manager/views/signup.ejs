@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Signup Page</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Sign Up</h2>
+      <form id="signupForm">
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="username"
+            placeholder="Enter username"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            placeholder="Enter email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            placeholder="Enter password"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="repeatPassword">Repeat Password:</label>
+          <input
+            type="password"
+            class="form-control"
+            id="repeatPassword"
+            placeholder="Repeat password"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </form>
+      <div class="my-4"><a href="/login">Already have an account?</a></div>
+      <div class="mt-4">
+        <h5>Or sign up with Google:</h5>
+        <button class="btn btn-danger" onclick="googleSignup()">
+          Sign up with Google
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function googleSignup() {
+        window.location.href = 'http://localhost:3001/auth/googleLogin';
+      }
+
+      document
+        .getElementById('signupForm')
+        .addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var username = document.getElementById('username').value;
+          var email = document.getElementById('email').value;
+          var password = document.getElementById('password').value;
+          var repeatPassword = document.getElementById('repeatPassword').value;
+
+          var formData = {
+            username: username,
+            email: email,
+            password: password,
+            repeatPassword: repeatPassword,
+          };
+
+          fetch('http://localhost:3001/auth/signup', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          })
+            .then(function (response) {
+              if (response.ok) {
+                window.location.href = '/login';
+              } else {
+                response.json().then(function (data) {
+                  alert('Error: ' + data.message);
+                });
+              }
+            })
+            .catch(function (error) {
+              console.log('Error:', error);
+            });
+        });
+    </script>
+  </body>
+</html>

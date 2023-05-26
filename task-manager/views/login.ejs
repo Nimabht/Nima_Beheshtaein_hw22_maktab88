@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login Page</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email:</label>
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            placeholder="Enter email"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            placeholder="Enter password"
+            required
+          />
+        </div>
+        <button type="submit" class="btn btn-primary">Login</button>
+      </form>
+      <div class="my-4"><a href="/signup">Register new account</a></div>
+      <div class="mt-4">
+        <h5>Or login with Google:</h5>
+        <button class="btn btn-danger" onclick="googleLogin()">
+          Login with Google
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function googleLogin() {
+        window.location.href = 'http://localhost:3001/auth/googleLogin';
+      }
+
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (event) {
+          event.preventDefault();
+
+          var email = document.getElementById('email').value;
+          var password = document.getElementById('password').value;
+          var formData = {
+            email: email,
+            password: password,
+          };
+
+          fetch('http://localhost:3001/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          })
+            .then(function (response) {
+              if (response.ok) {
+                window.location.href = '/dashboard';
+              } else {
+                response.json().then(function (data) {
+                  alert('Error: ' + data.message);
+                });
+              }
+            })
+            .catch(function (error) {
+              console.log('Error:', error);
+            });
+        });
+    </script>
+  </body>
+</html>

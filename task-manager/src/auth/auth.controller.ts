@@ -3,18 +3,23 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   NotFoundException,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Req,
+  Request,
   Res,
   UnauthorizedException,
   UseGuards,
   UseInterceptors,
+  forwardRef,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -24,13 +29,16 @@ import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { ConfigService } from '@nestjs/config';
 import { MailService } from './../mail/mail.service';
 import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard as myAuthGuard } from './auth.guard';
 import { SigninUserDto } from './dto/signin-auth.dto';
 import { CreateGoogleUserDto } from 'src/user/dto/create-google-user.dto';
+import { ResetPasswordDto } from './dto/update-password.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
+    @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
@@ -53,11 +61,11 @@ export class AuthController {
     );
     await this.userService.create(createUserDto);
     await this.authService.createEmailVerification(createUserDto.email, token);
-    await this.mailService.sendUserConfirmation(
-      createUserDto.email,
-      createUserDto.username,
-      token,
-    );
+    // await this.mailService.sendUserConfirmation(
+    //   createUserDto.email,
+    //   createUserDto.username,
+    //   token,
+    // );
 
     return 'Please confirm your email!';
   }
@@ -126,6 +134,28 @@ export class AuthController {
       httpOnly: false,
     });
 
-    return res.status(HttpStatus.OK).send({ message: 'Login successful' });
+    return res.status(HttpStatus.OK).redirect('/dashboard');
+  }
+
+  @Patch('/reset-password/:id')
+  @UseGuards(myAuthGuard)
+  async resetPassword(
+    @Request() req,
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const user = await this.userService.findById(+id);
+    if (!user) throw new NotFoundException('user not found.');
+    const userId = req.userPayload.id;
+    if (userId !== id) throw new ForbiddenException();
+    if (!(await user.validatePassword(resetPasswordDto.currentPassword))) {
+      throw new ForbiddenException('Wrong current password.');
+    }
+    if (resetPasswordDto.newPassword !== resetPasswordDto.repeatNewPassword)
+      throw new BadRequestException("new password doesn't match.");
+    return await this.userService.resetPassword(
+      id,
+      resetPasswordDto.newPassword,
+    );
   }
 }

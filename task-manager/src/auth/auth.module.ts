@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from 'src/user/user.module';
@@ -22,9 +22,10 @@ import { AuthGuard } from '@nestjs/passport';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
-    UserModule,
+    forwardRef(() => UserModule),
     MailModule,
     TypeOrmModule.forFeature([EmailVerification]),
   ],
+  exports: [AuthService],
 })
 export class AuthModule {}
