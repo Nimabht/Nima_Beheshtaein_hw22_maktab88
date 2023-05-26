@@ -8,6 +8,7 @@ import { EmailVerification } from './entities/user.entity';
 import { MailModule } from 'src/mail/mail.module';
 import { GoogleStrategy } from './google.strategy';
 import { JwtModule } from '@nestjs/jwt';
+import { AuthGuard } from '@nestjs/passport';
 
 @Module({
   controllers: [AuthController],
