@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
@@ -6,8 +6,6 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { join } from 'node:path';
 import { AuthModule } from './auth/auth.module';
-import { SendgridService } from './sendgrid/sendgrid.service';
-import { SendgridModule } from './sendgrid/sendgrid.module';
 import { MailModule } from './mail/mail.module';
 
 @Module({
@@ -28,10 +26,9 @@ import { MailModule } from './mail/mail.module';
     }),
     UserModule,
     AuthModule,
-    SendgridModule,
     MailModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SendgridService],
+  providers: [AppService],
 })
 export class AppModule {}
