@@ -7,7 +7,6 @@ import * as SendGrid from '@sendgrid/mail';
 import { JwtPayload, sign, verify } from 'jsonwebtoken';
 import { User } from 'src/user/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
-import { GoogleUser } from 'src/user/entities/googleUser.entity';
 
 @Injectable()
 export class AuthService {
@@ -52,15 +51,9 @@ export class AuthService {
     return true;
   }
 
-  async signIn(user: User | GoogleUser): Promise<any> {
+  async signIn(user: User): Promise<any> {
     let payload: object;
-    if (user instanceof GoogleUser) {
-      payload = { id: user.id, loginMethod: 'google' };
-    } else {
-      // The user is a regular User
-      payload = { id: user.id, loginMethod: 'manual' };
-    }
-
+    payload = { id: user.id, loginMethod: 'google' };
     const token = await this.jwtService.signAsync(payload);
     return token;
   }

@@ -1,5 +1,11 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { IsEmail, IsNotEmpty, IsString, IsBoolean } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsString,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import * as bcrypt from 'bcrypt';
 import { Exclude } from 'class-transformer';
 
@@ -19,9 +25,9 @@ export class User {
   email: string;
 
   @Exclude()
-  @Column({ nullable: false })
-  @IsNotEmpty()
-  password: string;
+  @Column({ nullable: true })
+  @IsOptional()
+  password?: string;
 
   @Column({ nullable: false })
   @IsNotEmpty()

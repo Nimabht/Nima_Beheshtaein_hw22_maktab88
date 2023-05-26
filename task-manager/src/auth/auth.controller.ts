@@ -25,6 +25,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailService } from './../mail/mail.service';
 import { AuthGuard } from '@nestjs/passport';
 import { SigninUserDto } from './dto/signin-auth.dto';
+import { CreateGoogleUserDto } from 'src/user/dto/create-google-user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -50,8 +51,8 @@ export class AuthController {
     const token = this.authService.generateVerificationToken(
       createUserDto.email,
     );
-    await this.authService.createEmailVerification(createUserDto.email, token);
     await this.userService.create(createUserDto);
+    await this.authService.createEmailVerification(createUserDto.email, token);
     await this.mailService.sendUserConfirmation(
       createUserDto.email,
       createUserDto.username,
@@ -110,13 +111,15 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const { email, firstname, lastname } = req.user;
-    if (!!(await this.userService.findByEmail(email))) {
-      throw new BadRequestException('Try another email.');
+    if (!(await this.userService.findByEmail(email))) {
+      const information: CreateGoogleUserDto = {
+        username: `${firstname}_${lastname}_${Date.now()}`,
+        email,
+      };
+      await this.userService.create(information);
     }
-    if (!(await this.userService.googleFindByEmail(email))) {
-      await this.userService.googleCreate(email, firstname, lastname);
-    }
-    const user = await this.userService.googleFindByEmail(email);
+
+    const user = await this.userService.findByEmail(email);
     const token = await this.authService.signIn(user);
 
     res.cookie('jwt', token, {

@@ -4,36 +4,39 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { DeleteResult, Repository } from 'typeorm';
-import { GoogleUser } from './entities/googleUser.entity';
+import { CreateGoogleUserDto } from './dto/create-google-user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private userRepository: Repository<User>,
-    @InjectRepository(GoogleUser)
-    private googleUserRepository: Repository<GoogleUser>,
   ) {}
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto): Promise<User> {
+    if (createUserDto.password) {
+      createUserDto = new CreateUserDto(createUserDto);
+    } else {
+      createUserDto = new CreateGoogleUserDto(createUserDto);
+    }
+
     const user = new User();
+
+    if (createUserDto instanceof CreateUserDto) {
+      user.password = createUserDto.password;
+      await user.hashPassword();
+      user.verified = true;
+      // Set other properties specific to CreateUserDto if needed
+    } else if (createUserDto instanceof CreateGoogleUserDto) {
+      user.verified = false;
+      // Set other properties specific to CreateGoogleUserDto if needed
+    } else {
+      throw new Error('Invalid createUserDto type');
+    }
+
     user.username = createUserDto.username;
     user.email = createUserDto.email;
-    user.password = createUserDto.password;
-    user.verified = false;
-    await user.hashPassword();
-    const createdUser = await this.userRepository.save(user);
-    return createdUser;
-  }
 
-  async googleCreate(
-    email: string,
-    firstname: string,
-    lastname: string,
-  ): Promise<GoogleUser> {
-    const user = new GoogleUser();
-    user.username = `google_${firstname}_${lastname}`;
-    user.email = email;
-    const createdUser = await this.googleUserRepository.save(user);
+    const createdUser = await this.userRepository.save(user);
     return createdUser;
   }
 
@@ -47,10 +50,6 @@ export class UserService {
 
   findByEmail(email: string): Promise<User> {
     return this.userRepository.findOneBy({ email });
-  }
-
-  googleFindByEmail(email: string): Promise<GoogleUser> {
-    return this.googleUserRepository.findOneBy({ email });
   }
 
   findByUsername(username: string): Promise<User> {
