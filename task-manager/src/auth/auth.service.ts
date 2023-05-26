@@ -53,7 +53,7 @@ export class AuthService {
 
   async signIn(user: User): Promise<any> {
     let payload: object;
-    payload = { id: user.id, loginMethod: 'google' };
+    payload = { id: user.id };
     const token = await this.jwtService.signAsync(payload);
     return token;
   }

@@ -110,10 +110,10 @@ export class AuthController {
   @Get('redirect')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const { email, firstname, lastname } = req.user;
+    const { email, firstName, lastName } = req.user;
     if (!(await this.userService.findByEmail(email))) {
       const information: CreateGoogleUserDto = {
-        username: `${firstname}_${lastname}_${Date.now()}`,
+        username: `${firstName}_${lastName}_${Date.now()}`,
         email,
       };
       await this.userService.create(information);
